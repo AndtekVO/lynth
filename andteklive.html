@@ -1,0 +1,363 @@
+<!doctype html>
+<head>
+<title>LYNTH</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="An experimental text editor with an embedded neural text synthesizer.">
+<meta name="keywords" content="neural,text,editor,autocomplete,prediction,generator,neural network,tensorfire">
+<meta name="author" content="Kevin Kwok">
+
+<link rel="stylesheet" href="lib/codemirror.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.10&appId=234263839953649';
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+<div id="container">
+<div id="preamble">
+    <a href="https://github.com/tensorfire/cyborg-writer" class="github-corner" aria-label="View source on Github"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#80c24a; color:#424240; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <h1><img src="robot-face.png" align="top" style="width: 1.1em;margin-right:7px;">Cyborg Writer</h1>
+
+     <p>This is an <b>experimental text editor</b> with a <b>neural text synthesizer</b>. 
+
+    <p>Feeling writer's block? Hit <b>&lt;Tab&gt;</b> and an artificial neural network running in your <b>browser</b> will finish your sentence as if it were written by <b>Shakespeare</b>, the <b>US Supreme Court</b>, or <b>Tupac Shakur</b>. 
+
+    <p>This project was inspired by Robin Sloan's <a href="https://www.robinsloan.com/notes/writing-with-the-machine/"> rnn-writer</a>, and is powered by <a href="https://tenso.rs/">TensorFire</a> and <b>CodeMirror</b>. It's built by <a href="https://twitter.com/antimatter15">Kevin Kwok</a>, <a href="https://twitter.com/biject">Guillermo Webster</a>, <a href="http://www.anishathalye.com/">Anish Athalye</a>, and <a href="https://github.com/lengstrom">Logan Engstrom</a>.
+
+    </p>
+
+    <div style="display: flex">
+        <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="Cyborg Writer— text editor with an A.I. Tupac &amp; Shakespeare" data-url="https://cyborg.tenso.rs/" data-related="antimatter15,biject" data-show-count="false">Tweet</a><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+        &nbsp;
+        <div class="fb-share-button" data-href="https://cyborg.tenso.rs/" data-layout="button_count" data-size="small" data-mobile-iframe="true"><a class="fb-xfbml-parse-ignore" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fcyborg.tenso.rs%2F&amp;src=sdkpreparse">Share</a></div>
+    </div>
+</div>
+
+
+
+
+<div id="workaround">
+    <div id='toolbar'>
+        <select id="model_picker" value="trump-256" disabled onchange="loadModel()">
+            <option>William Shakespeare</option>
+        </select>
+        <span class="spacer"></span>
+        
+        <span id="weirdness-stuff">
+            Weirdness: 
+
+            <input disabled id="temperature"
+                oninput="document.getElementById('temp').innerHTML = (+this.value).toFixed(2)"
+                onchange="updateCompletion()" type="range" style="width: 300px" value="0.6" min="0.2" max="2" step="0.01">
+            <span id="temp">0.60</span>
+        </span>
+
+        <!-- &rarr; -->
+        <button id="do-stuff" onclick="updateCompletion()">Synthesize ›</button>        
+    </div>
+    <div id="editor"></div>
+</div>
+
+
+
+
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script src="lib/demo-util.js"></script>
+<script src="lib/tensor.js"></script>
+<script src="lib/codemirror.js"></script>
+<script src="lib/scrollpastend.js"></script>
+<script src="lib/placeholder.js"></script>
+<script src="lstm.js"></script>
+<script src="models.js"></script>
+<script src="util.js"></script>
+<script>
+
+document.getElementById('model_picker').innerHTML = ''
+for(let k in models){
+    document.getElementById('model_picker').appendChild(new Option(models[k].name || k, k))
+}
+
+
+
+var gl = TF.createGL(document.getElementById('canvas')),
+    OutputTensor = TF.OutputTensor,
+    Tensor = TF.Tensor,
+    InPlaceTensor = TF.InPlaceTensor;
+
+
+
+function destroyTensors(tensors){
+    for(var i = 0; i < tensors.length; i++){
+        if(tensors[i]){
+            tensors[i].destroy()
+        }
+    }
+}
+
+var allLSTMWeights = [], allLSTMStates = [], denseWeights, denseBias, oneHotVector, charTensor, state, denseOutput, buffer;
+
+async function loadModel(){
+    document.getElementById('toolbar').style.display = ''
+    document.getElementById('model_picker').disabled = true;
+    document.getElementById('temperature').disabled = true;
+
+    var m = models[document.getElementById('model_picker').value],
+        Ns = m.Ns, Ni = m.Ni;
+    
+    console.assert(Ni == m.chars.length);
+
+    destroyTensors(allLSTMWeights.concat(allLSTMStates, [ denseWeights, denseBias, oneHotVector, charTensor, state, denseOutput, buffer ]))
+
+    allLSTMWeights = []
+    allLSTMStates = []
+
+    for(var i = 0; i < (m.layers || 1); i++){
+        allLSTMWeights.push(new Tensor(gl, await loadArrayFromURL(m.path + '/lstm_' + (i+1) + '_combined-'+Ns+'x' + (Ns+( i === 0 ? Ni : Ns)+1) + 'x4')))
+        allLSTMStates.push(new InPlaceTensor(gl, [Ns, 1, 4]))
+    }
+    // lstm1Weights = new Tensor(gl, await loadArrayFromURL(m.path + '/lstm_1_combined-'+Ns+'x' + (Ns+Ni+1) + 'x4'));
+
+    denseWeights = new Tensor(gl, await loadArrayFromURL(m.path + '/dense_1-weights-kernel-'+Ns+'x'+Ni))
+    denseBias = new Tensor(gl, await loadArrayFromURL(m.path + '/dense_1-weights-bias-'+Ni))
+
+
+    oneHotVector = new OutputTensor(gl, [Ni, 1, 4])
+    charTensor = new OutputTensor(gl, [1])
+    // state1 = new InPlaceTensor(gl, [Ns, 1, 4])
+    // state2 = new InPlaceTensor(gl, [Ns, 1, 4])
+    denseOutput = new OutputTensor(gl, [Ni, 1, 4])
+    buffer = new InPlaceTensor(gl, [ 1, 1, 1, 200 ])
+
+    document.getElementById('model_picker').disabled = false;
+    document.getElementById('temperature').disabled = false;
+    
+}
+
+loadModel()
+
+async function generateCompletion(input, temperature = 0.7){
+    var m = models[document.getElementById('model_picker').value],
+        Ns = m.Ns, Ni = m.Ni, chars = m.chars;
+
+    var startTime = Date.now()
+
+    input = input.split('').filter(k => chars.indexOf(k) != -1).join('')
+
+    for(let i = 0; i < buffer.shape[3]; i++){
+        if(i < input.length)
+            charTensor.update(ndpack([[ chars.indexOf(input[i]), 0, 0, 0 ]]));
+        
+        oneHotVector.run(OneHot, { data: charTensor })
+        // state.run(LSTM, { X: oneHotVector, prev: state, W: lstm1Weights })
+        var previousResult = oneHotVector;
+        for(var j = 0; j < allLSTMWeights.length; j++){
+            allLSTMStates[j].run(LSTM, { X: previousResult, prev: allLSTMStates[j], W: allLSTMWeights[j] })
+            previousResult = allLSTMStates[j];
+        }
+
+        denseOutput.run(FullyConnected, { inputs: previousResult, b: denseBias, W: denseWeights })
+        charTensor.run(WarmSample, { data: denseOutput, temperature: temperature, random: Math.random() })
+        buffer.run(TextureBuffer, { buffer: buffer, data: charTensor, index: i })
+    }
+
+
+    await buffer.ready();
+    // buffer._show({ scale: 1 / Ni })
+
+    var message = Array.from(buffer.read().data).map(k => chars[k]).join('').slice(input.length - 1)
+    console.log('%c' + input + '%c' + message, 'color: black', 'color: blue');
+    return message;
+}
+
+
+
+var cm = CodeMirror(document.getElementById('editor'), {
+    value: '',
+    lineWrapping: true,
+    cursorScrollMargin: 50,
+    extraKeys: {
+        Tab: function(cm){
+            setTimeout(updateCompletion, 20);
+        },
+    },
+    viewportMargin: Infinity,
+    // scrollPastEnd: true,
+    // placeholder: innerWidth < 700 ? 'Swipe right to cycle between synthesized sentences.' : 'Hit Tab to cycle between synthesized sentences.'
+});
+
+
+
+cm.on('refresh', function(){
+    // var oh = document.getElementById('preamble').offsetHeight
+
+    // if (cm.state.preamblePadding != oh) {
+    //     // console.log(oh)
+    //     cm.display.lineSpace.parentNode.style.paddingTop = (oh + 50) + 'px';
+    // }
+})
+
+
+var abortTyping = false;
+cm.on('keydown', function(){
+    abortTyping = true;
+    // console.log('abort')
+})
+
+cm.refresh()
+cm.focus()
+
+var isGenerating = false;
+async function updateCompletion(){
+    if(document.getElementById('model_picker').disabled) return;
+    if(isGenerating) return;
+    isGenerating = true;
+    abortTyping = false
+    // let attempt = Date.now();
+    // currentCompletion = attempt;
+    var m = models[document.getElementById('model_picker').value]
+
+    var leadingText = (m.prefix + cm.getRange({ line: 0, ch: 0 }, cm.getCursor('from'))).slice(-100);
+    var waitEl = document.createElement('span')
+    waitEl.className = 'waiting'
+    // waitEl.innerHTML = '...'
+    // cm.setBookmark(cm.getCursor('from'), {
+    //     widget: waitEl
+    // })
+
+    if(!cm.getSelection()) cm.replaceSelection('#', 'around');
+
+    var mark = cm.markText(cm.getCursor('from'), cm.getCursor('to'), {
+        replacedWith: waitEl,
+        clearWhenEmpty: false,
+        atomic: true
+    })
+    cm.setSelection(cm.getCursor('to'))
+
+    // return;
+
+    
+    var text = null;
+    await nextFrame();
+
+    // if(currentCompletion != attempt) return;
+
+    var raw_completion = await generateCompletion(leadingText, +document.getElementById('temperature').value);
+    try {
+        text = raw_completion.match(/^.*?((\.|\!|\;)+\s+)/)[0]
+    } catch (err) {
+        text = raw_completion.split(' ').slice(0, -2).join(' ')
+    }
+    
+    if(text){
+        // console.log('new text', text)
+        // var f = mark.find();
+        
+        // mark.clear()
+        // cm.setSelection(f.from, f.to)
+        // cm.replaceRange(text, f.from, f.to)
+        // cm.replaceSelection(text, 'around')
+
+        for(var i = 0; i < text.length; i++){
+            // if(currentCompletion != attempt) return;
+            if(abortTyping) break;
+            
+            let f = mark.find();
+            mark.clear()
+            cm.setSelection(f.from, f.to)
+            cm.replaceSelection(text.slice(0, i + 1), 'around')
+            mark = cm.markText(cm.getCursor('from'), cm.getCursor('to'))
+
+            await nextFrame();
+        }
+
+        // cm.replaceSelection(text, 'around')
+        let f = mark.find();
+        mark.clear()
+        cm.setSelection(f.from, f.to)
+        cm.replaceSelection(text, 'around')
+        mark = cm.markText(cm.getCursor('from'), cm.getCursor('to'))
+
+    }else{
+        console.warn('unable to find complete sentence', leadingText)
+    }
+
+    isGenerating = false;
+}
+
+
+async function typeInitialText(){
+    // let text = cm.options.placeholder;
+    let text = innerWidth < 700 ? 'Swipe right to cycle between synthesized sentences.' : 'Hit Tab to cycle between synthesized sentences.'
+    await nextFrame();
+    for(var i = 0; i < text.length; i++){
+        // if(currentCompletion != attempt) return;
+        if(abortTyping) break;
+        
+        // let f = mark.find();
+        // mark.clear()
+        // cm.setSelection(f.from, f.to)
+        // cm.replaceSelection(text.slice(0, i + 1), 'around')
+        if(text[i] == ' '){
+            await nextFrame();
+            await nextFrame();
+            await nextFrame();
+        }
+
+        cm.setOption('placeholder', text.slice(0, i + 1))
+        // mark = cm.markText(cm.getCursor('from'), cm.getCursor('to'))
+
+        await nextFrame();
+        await nextFrame();
+    }
+}
+
+setTimeout(typeInitialText, 500)
+
+// https://stackoverflow.com/a/23230280/205784
+document.addEventListener('touchstart', handleTouchStart, false);        
+document.addEventListener('touchmove', handleTouchMove, false);
+var xDown = null;                                                        
+var yDown = null;                                                        
+function handleTouchStart(evt) {                                         
+    xDown = evt.touches[0].clientX;                                      
+    yDown = evt.touches[0].clientY;                                      
+};                                                
+function handleTouchMove(evt) {
+    if ( ! xDown || ! yDown ) return;
+    var xUp = evt.touches[0].clientX;                                    
+    var yUp = evt.touches[0].clientY;
+    var xDiff = xDown - xUp;
+    var yDiff = yDown - yUp;
+    if ( Math.abs( xDiff ) > Math.abs( yDiff ) ) {/*most significant*/
+        if ( xDiff > 0 ) {
+            /* left swipe */ 
+        } else {
+            updateCompletion()
+        }                       
+    }
+    xDown = null;
+    yDown = null;                                             
+};
+
+
+</script>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-83153710-9"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-83153710-9');
+</script>
