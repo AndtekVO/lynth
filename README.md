@@ -1,10 +1,8 @@
-# Cyborg Writer
+# Lynth 
 
-![Cyborg Writer Screencast](http://g.recordit.co/eBuga6lg6t.gif)
+This is an experimental Lyrics Synthetizer with an neural networks.
 
-This is an experimental text editor with an neural text synthesizer.
-
-Feeling writer's block? Hit <Tab> and an artificial neural network running in your browser will finish your sentence as if it were written by Shakespeare, the US Supreme Court, or Tupac Shakur.
+Feeling inspired today? Let Lynth write a augmented lyrics for you! Hit <Tab> and an artificial neural network running in your browser will finish your sentence as if it were written by MichaelJackson, The Beatles, Queen, Taylor Swift or Eminem (you can train your own models)
 
 
 ## Training
@@ -14,4 +12,4 @@ Interested in training your own corpus? Check out the `training/` directory, whi
 
 ## Credits
 
-This project was inspired by Robin Sloan's rnn-writer, and is powered by [TensorFire](https://tenso.rs/) and [CodeMirror](https://codemirror.net/). It's built by [Kevin Kwok](https://twitter.com/antimatter15), Guillermo Webster, Anish Athalye, and Logan Engstrom. 
+This project was inspired by Robin Sloan's rnn-writer, and is powered by [SynapseGL](http://synapsegl.network/) and [CodeMirror](https://codemirror.net/). It's built by [Kevin Kwok](https://twitter.com/antimatter15), Guillermo Webster, Anish Athalye, Logan Engstrom and [Ian Andtek](http://andtek.pro)
